@@ -138,9 +138,9 @@ class nSim_app:
         pygame.display.flip()
 
     def run(self):
-        dt = 10000
+        dt = 60
         while True:
-            self.clock.tick(10000)
+            self.clock.tick(60)
             for event in pygame.event.get():
                 if event.type == QUIT:
                     return
