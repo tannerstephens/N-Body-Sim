@@ -81,8 +81,8 @@ class nSim_app:
 
         for body in self.body_list:
             [fx,fy] = forces[body]
-            ax = fx * body.mass
-            ay = fy * body.mass
+            ax = fx / body.mass
+            ay = fy / body.mass
 
             dvx = ax * dt
             dvy = ay * dt
@@ -100,8 +100,6 @@ class nSim_app:
             for body2 in self.body_list:
                 if body1 != body2:
                     if nSim.utils.collision(body1.pos,body1.r,body2.pos,body2.r):
-                        rem.append(body2)
-
                         m1x = body1.mass * body1.vel[0]
                         m1y = body1.mass * body1.vel[1]
                         m2x = body2.mass * body2.vel[0]
@@ -110,23 +108,37 @@ class nSim_app:
                         mx = m1x + m2x
                         my = m1y + m2y
 
-                        body1.density = ((body1.density * body1.vol) + (body2.density*body2.vol))/(body1.vol+body2.vol)
-                        body1.vol += body2.vol
-                        body1.mass += body2.mass
-                        body1.r = round(math.sqrt(body1.mass / (math.pi * body1.density)))
+                        if body1.mass > body2.mass:
+                            rem.append(body2)
+                            body1.density = ((body1.density * body1.vol) + (body2.density*body2.vol))/(body1.vol+body2.vol)
+                            body1.vol += body2.vol
+                            body1.mass += body2.mass
+                            body1.r = round(math.sqrt(body1.mass / (math.pi * body1.density)))
 
-                        vx = mx / body1.mass
-                        vy = my / body1.mass
+                            vx = mx / body1.mass
+                            vy = my / body1.mass
 
-                        body1.vel = [vx,vy]
+                            body1.vel = [vx,vy]
+                        else:
+                            rem.append(body1)
+                            body2.density = ((body1.density * body1.vol) + (body2.density*body2.vol))/(body1.vol+body2.vol)
+                            body2.vol += body1.vol
+                            body2.mass += body1.mass
+                            body2.r = round(math.sqrt(body2.mass / (math.pi * body2.density)))
+
+                            vx = mx / body2.mass
+                            vy = my / body2.mass
+
+                            body2.vel = [vx,vy]
+
+
             for r in rem:
                 self.body_list.remove(r)
 
             i += 1
 
-    def draw_bodies(self):
-        if self.refresh:
-            self.screen.blit(self.background, (0, 0))
+    def draw_bodies(self,r):
+        self.screen.blit(self.background, (0, 0))
         for body in self.body_list:
             pix = nSim.utils.pos_to_pix(body.pos, self.screen_size, self.zoom)
             if pix[0] > self.screen_size[0]+100 or pix[0] < -100:
@@ -135,10 +147,19 @@ class nSim_app:
                 continue
             pygame.draw.circle(self.screen, body.color, pix, round(body.r * self.zoom))
 
-        pygame.display.flip()
+        pix = pygame.mouse.get_pos()
+        s = pygame.Surface(self.screen_size)
+        s.fill((0,0,0))
+        s.set_colorkey((0,0,0))
+        pygame.draw.circle(s, (255,255,255), pix, round(r * self.zoom))
+        s.set_alpha(25)
+        self.screen.blit(s,(0,0))
 
     def run(self):
-        dt = 60
+        dt = 1/60
+        zoom_on = False
+        r = 16
+        drawing = False
         while True:
             self.clock.tick(60)
             for event in pygame.event.get():
@@ -146,19 +167,65 @@ class nSim_app:
                     return
                 elif event.type == MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        can_add = False
+                        drawing = True
                         pix = pygame.mouse.get_pos()
-                        pos = nSim.utils.pix_to_pos(pix,self.screen_size,self.zoom)
-                        self.body_list.append(body(pos,15,1000000))
+                        start_pos = nSim.utils.pix_to_pos(pix,self.screen_size,self.zoom)
                     elif event.button == 4:
-                        self.zoom *= 2
+                        if zoom_on:
+                            self.zoom *= 2
+                        else:
+                            r *= 2
                     elif event.button == 5:
-                        self.zoom /= 2
+                        if zoom_on:
+                            self.zoom /= 2
+                        else:
+                            r /= 2
+                elif event.type == MOUSEBUTTONUP:
+                    if event.button == 1:
+                        drawing = False
+                        pix = pygame.mouse.get_pos()
+                        end_pos = nSim.utils.pix_to_pos(pix,self.screen_size,self.zoom)
+
+                        v_x = start_pos[0] - end_pos[0]
+                        v_y = start_pos[1] - end_pos[1]
+
+                        vel = [v_x,v_y]
+
+                        vol = math.pi * pow(r,2)
+
+                        b = body(start_pos, r, 1000000000000*vol)
+
+                        b.vel = vel
+
+                        self.body_list.append(b)
+
+
+
                 elif event.type == KEYDOWN:
                     if event.key == K_d:
                         self.refresh = not self.refresh
                     elif event.key == K_c:
                         self.body_list = []
+                    elif event.key == K_SPACE:
+                        if dt == 0:
+                            dt = 1/60
+                        else:
+                            dt = 0
+                    elif event.key == K_z:
+                        zoom_on = not zoom_on
+                        print(zoom_on)
 
-            self.update_bodies(1/dt)
-            self.draw_bodies()
+
+            self.update_bodies(dt)
+            self.draw_bodies(r)
+
+            if drawing:
+                pygame.draw.line(self.screen, (255,255,255), nSim.utils.pos_to_pix(start_pos,self.screen_size,self.zoom), pygame.mouse.get_pos())
+
+            pygame.display.flip()
+
+            out = ""
+            for bodyI in self.body_list:
+                out += ", " + str(bodyI.mass)
+
+            print(out)
