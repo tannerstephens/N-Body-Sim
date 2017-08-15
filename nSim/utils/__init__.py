@@ -5,7 +5,11 @@ def r_theta(pos1, pos2):
     dy = pos2[1] - pos1[1]
 
     r = math.sqrt(pow(dx,2) + pow(dy,2))
-    theta = math.atan(dy/dx)
+
+    if dx == 0:
+        theta = 0
+    else:
+        theta = math.atan(dy/dx)
 
     return r,theta
 

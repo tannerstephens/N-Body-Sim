@@ -55,7 +55,10 @@ class nSim_app:
                     m1 = body1.mass
                     m2 = body2.mass
 
-                    f = (G*m1*m2)/pow(r,2)
+                    if r == 0:
+                        f = 0
+                    else:
+                        f = (G*m1*m2)/pow(r,2)
 
                     fx = abs(math.cos(theta) * f)
                     fy = abs(math.sin(theta) * f)
