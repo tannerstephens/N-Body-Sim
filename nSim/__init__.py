@@ -27,7 +27,7 @@ class body:
 
 class nSim_app:
     def __init__(self):
-        self.screen_size = (1024,768)
+        self.screen_size = (1600,900)
         self.screen = pygame.display.set_mode(self.screen_size)
         pygame.display.set_caption('N-Body Sim')
 
@@ -42,15 +42,13 @@ class nSim_app:
         self.refresh = True
 
     def update_bodies(self, dt):
-        d=0
+        d=1
         forces = dict.fromkeys(self.body_list)
 
         for body in self.body_list:
             forces[body] = [0,0]
 
         for body1 in self.body_list:
-            fx = 0
-            fy = 0
             for body2 in self.body_list[d:]:
                 if body1 != body2:
                     r,theta = nSim.utils.r_theta(body1.pos, body2.pos)
@@ -59,8 +57,8 @@ class nSim_app:
 
                     f = (G*m1*m2)/pow(r,2)
 
-                    fx += abs(math.cos(theta) * f)
-                    fy += abs(math.sin(theta) * f)
+                    fx = abs(math.cos(theta) * f)
+                    fy = abs(math.sin(theta) * f)
 
                     if body1.pos[0] > body2.pos[0]:
                         forces[body1][0] -= fx
@@ -141,9 +139,9 @@ class nSim_app:
         self.screen.blit(self.background, (0, 0))
         for body in self.body_list:
             pix = nSim.utils.pos_to_pix(body.pos, self.screen_size, self.zoom)
-            if pix[0] > self.screen_size[0]+100 or pix[0] < -100:
+            if pix[0] > self.screen_size[0] + round(body.r * self.zoom) or pix[0] < - round(body.r * self.zoom):
                 continue
-            if pix[1] > self.screen_size[1]+100 or pix[1] < -100:
+            if pix[1] > self.screen_size[1] + round(body.r * self.zoom) or pix[1] < - round(body.r * self.zoom):
                 continue
             pygame.draw.circle(self.screen, body.color, pix, round(body.r * self.zoom))
 
@@ -156,7 +154,7 @@ class nSim_app:
         self.screen.blit(s,(0,0))
 
     def run(self):
-        dt = 1/60
+        dt = 10
         zoom_on = False
         r = 16
         drawing = False
@@ -186,14 +184,14 @@ class nSim_app:
                         pix = pygame.mouse.get_pos()
                         end_pos = nSim.utils.pix_to_pos(pix,self.screen_size,self.zoom)
 
-                        v_x = start_pos[0] - end_pos[0]
-                        v_y = start_pos[1] - end_pos[1]
+                        v_x = (start_pos[0] - end_pos[0]) * .25
+                        v_y = (start_pos[1] - end_pos[1]) * .25
 
                         vel = [v_x,v_y]
 
                         vol = math.pi * pow(r,2)
 
-                        b = body(start_pos, r, 1000000000000*vol)
+                        b = body(start_pos, r, 100000000000*pow(vol,.7))
 
                         b.vel = vel
 
@@ -213,7 +211,6 @@ class nSim_app:
                             dt = 0
                     elif event.key == K_z:
                         zoom_on = not zoom_on
-                        print(zoom_on)
 
 
             self.update_bodies(dt)
@@ -223,9 +220,3 @@ class nSim_app:
                 pygame.draw.line(self.screen, (255,255,255), nSim.utils.pos_to_pix(start_pos,self.screen_size,self.zoom), pygame.mouse.get_pos())
 
             pygame.display.flip()
-
-            out = ""
-            for bodyI in self.body_list:
-                out += ", " + str(bodyI.mass)
-
-            print(out)
