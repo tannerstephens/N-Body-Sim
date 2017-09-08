@@ -157,7 +157,7 @@ class nSim_app:
         self.screen.blit(s,(0,0))
 
     def run(self):
-        dt = 10
+        dt = .5
         zoom_on = False
         r = 16
         drawing = False
@@ -187,14 +187,14 @@ class nSim_app:
                         pix = pygame.mouse.get_pos()
                         end_pos = nSim.utils.pix_to_pos(pix,self.screen_size,self.zoom)
 
-                        v_x = (start_pos[0] - end_pos[0]) * .25
-                        v_y = (start_pos[1] - end_pos[1]) * .25
+                        v_x = (start_pos[0] - end_pos[0]) * .05
+                        v_y = (start_pos[1] - end_pos[1]) * .05
 
                         vel = [v_x,v_y]
 
                         vol = math.pi * pow(r,2)
 
-                        b = body(start_pos, r, 100000000000*pow(vol,.7))
+                        b = body(start_pos, r, 10000000000*pow(r,2))
 
                         b.vel = vel
 
