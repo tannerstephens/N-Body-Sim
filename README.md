@@ -5,9 +5,9 @@ Requirements: Python 3.6, pygame
 
 Run with `python main.py`
 
-Controls:
+```Controls:
                   Z - toggle zoom/body size
         Mouse Wheel - adjust zoom/body size
          Left Click - Place body
 Left Click and Drag - Launch body
-          Space Bar - Toggle Pause
+          Space Bar - Toggle Pause```
